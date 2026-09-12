@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Heart Attack Risk Predictor</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card: #1e293b;
+      --accent: #ef4444;
+      --accent-hover: #dc2626;
+      --text: #f1f5f9;
+      --muted: #94a3b8;
+      --border: #334155;
+      --success: #22c55e;
+      --warning: #f59e0b;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      background: linear-gradient(145deg, #0f172a 0%, #1e1b4b 100%);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 2rem 1rem;
+    }
+    .container {
+      max-width: 720px;
+      margin: 0 auto;
+    }
+    header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    header h1 {
+      font-size: 1.9rem;
+      margin-bottom: 0.4rem;
+    }
+    header p {
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.75rem;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+    }
+    form {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem 1.25rem;
+    }
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+    .field.full { grid-column: 1 / -1; }
+    label {
+      font-size: 0.8rem;
+      color: var(--muted);
+      font-weight: 500;
+    }
+    input, select {
+      background: #0f172a;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.6rem 0.75rem;
+      color: var(--text);
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    input:focus, select:focus {
+      border-color: var(--accent);
+    }
+    button {
+      grid-column: 1 / -1;
+      margin-top: 0.5rem;
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      padding: 0.85rem;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    button:hover { background: var(--accent-hover); }
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    #result {
+      margin-top: 1.5rem;
+      padding: 1.25rem;
+      border-radius: 12px;
+      display: none;
+      text-align: center;
+    }
+    #result.show { display: block; }
+    #result.low { background: rgba(34, 197, 94, 0.15); border: 1px solid var(--success); }
+    #result.high { background: rgba(239, 68, 68, 0.15); border: 1px solid var(--accent); }
+    #result h2 { font-size: 1.25rem; margin-bottom: 0.4rem; }
+    #result .pct { font-size: 2rem; font-weight: 700; }
+    .disclaimer {
+      margin-top: 1.5rem;
+      font-size: 0.75rem;
+      color: var(--muted);
+      text-align: center;
+      line-height: 1.4;
+    }
+    @media (max-width: 560px) {
+      form { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🫀 Heart Attack Risk Predictor</h1>
+      <p>Enter patient details to estimate heart attack risk using a machine learning model.</p>
+    </header>
+
+    <div class="card">
+      <form id="predict-form">
+        <div class="field">
+          <label for="age">Age (years)</label>
+          <input type="number" id="age" name="age" min="1" max="120" value="55" required />
+        </div>
+        <div class="field">
+          <label for="sex">Sex</label>
+          <select id="sex" name="sex" required>
+            <option value="1">Male</option>
+            <option value="0">Female</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="cp">Chest Pain Type</label>
+          <select id="cp" name="cp" required>
+            <option value="0">0 - Typical angina</option>
+            <option value="1">1 - Atypical angina</option>
+            <option value="2" selected>2 - Non-anginal pain</option>
+            <option value="3">3 - Asymptomatic</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="trestbps">Resting BP (mm Hg)</label>
+          <input type="number" id="trestbps" name="trestbps" min="50" max="250" value="130" required />
+        </div>
+        <div class="field">
+          <label for="chol">Cholesterol (mg/dl)</label>
+          <input type="number" id="chol" name="chol" min="50" max="600" value="250" required />
+        </div>
+        <div class="field">
+          <label for="fbs">Fasting Blood Sugar > 120</label>
+          <select id="fbs" name="fbs" required>
+            <option value="0" selected>No</option>
+            <option value="1">Yes</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="restecg">Resting ECG</label>
+          <select id="restecg" name="restecg" required>
+            <option value="0">0 - Normal</option>
+            <option value="1" selected>1 - ST-T abnormality</option>
+            <option value="2">2 - Left ventricular hypertrophy</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="thalach">Max Heart Rate</label>
+          <input type="number" id="thalach" name="thalach" min="50" max="250" value="150" required />
+        </div>
+        <div class="field">
+          <label for="exang">Exercise Induced Angina</label>
+          <select id="exang" name="exang" required>
+            <option value="0" selected>No</option>
+            <option value="1">Yes</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="oldpeak">ST Depression (oldpeak)</label>
+          <input type="number" id="oldpeak" name="oldpeak" min="0" max="10" step="0.1" value="1.5" required />
+        </div>
+        <div class="field">
+          <label for="slope">ST Slope</label>
+          <select id="slope" name="slope" required>
+            <option value="0">0 - Upsloping</option>
+            <option value="1">1 - Flat</option>
+            <option value="2" selected>2 - Downsloping</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="ca">Major Vessels (0-4)</label>
+          <input type="number" id="ca" name="ca" min="0" max="4" value="0" required />
+        </div>
+        <div class="field">
+          <label for="thal">Thalassemia</label>
+          <select id="thal" name="thal" required>
+            <option value="1">1 - Normal</option>
+            <option value="2" selected>2 - Fixed defect</option>
+            <option value="3">3 - Reversible defect</option>
+          </select>
+        </div>
+        <button type="submit" id="submit-btn">Predict Risk</button>
+      </form>
+
+      <div id="result">
+        <h2 id="result-label"></h2>
+        <div class="pct" id="result-pct"></div>
+        <p id="result-detail" style="color: var(--muted); margin-top: 0.5rem;"></p>
+      </div>
+    </div>
+
+    <p class="disclaimer">
+      This is an educational demonstration only. It is not a medical diagnosis and must not replace professional medical advice.
+      Always consult a qualified healthcare provider.
+    </p>
+  </div>
+
+  <script>
+    const form = document.getElementById('predict-form');
+    const resultEl = document.getElementById('result');
+    const submitBtn = document.getElementById('submit-btn');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Predicting…';
+      resultEl.classList.remove('show', 'low', 'high');
+
+      const data = {
+        age: Number(form.age.value),
+        sex: Number(form.sex.value),
+        cp: Number(form.cp.value),
+        trestbps: Number(form.trestbps.value),
+        chol: Number(form.chol.value),
+        fbs: Number(form.fbs.value),
+        restecg: Number(form.restecg.value),
+        thalach: Number(form.thalach.value),
+        exang: Number(form.exang.value),
+        oldpeak: Number(form.oldpeak.value),
+        slope: Number(form.slope.value),
+        ca: Number(form.ca.value),
+        thal: Number(form.thal.value),
+      };
+
+      try {
+        const res = await fetch('/api/predict', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data),
+        });
+        const json = await res.json();
+        if (!res.ok) throw new Error(json.detail || 'Prediction failed');
+
+        document.getElementById('result-label').textContent = json.label;
+        document.getElementById('result-pct').textContent = json.risk_percent + '%';
+        document.getElementById('result-detail').textContent =
+          'Estimated probability of heart attack risk.';
+
+        resultEl.classList.add('show', json.prediction === 1 ? 'high' : 'low');
+      } catch (err) {
+        document.getElementById('result-label').textContent = 'Error';
+        document.getElementById('result-pct').textContent = '';
+        document.getElementById('result-detail').textContent = err.message;
+        resultEl.classList.add('show', 'high');
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Predict Risk';
+      }
+    });
+  </script>
+</body>
+</html>
