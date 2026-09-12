@@ -1,14 +1,21 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
-from typing import Optional
 import os
 import sys
 
 # Ensure project root is on path so we can import heart_attack_model
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, ROOT)
 
-from heart_attack_model import FEATURE_COLUMNS, load_model, predict as model_predict
+from heart_attack_model import (
+    FEATURE_COLUMNS,
+    load_model,
+    predict as model_predict,
+    generate_synthetic_dataset,
+    train_model,
+    save_model,
+)
 
 app = FastAPI(title="Heart Attack Prediction API")
 
@@ -19,19 +26,27 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Load model once at cold start
 _model = None
 
+
 def get_model():
+    """Load committed model or train a lightweight one on first request."""
     global _model
-    if _model is None:
-        # Prefer the committed model path relative to project root
-        model_path = os.path.join(
-            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-            "model",
-            "heart_attack_model.pkl",
-        )
+    if _model is not None:
+        return _model
+
+    model_path = os.path.join(ROOT, "model", "heart_attack_model.pkl")
+    if os.path.exists(model_path):
         _model = load_model(model_path)
+        return _model
+
+    # Fallback: train a small model on the fly (keeps deployment simple)
+    df = generate_synthetic_dataset(n_samples=300, random_state=42)
+    _model = train_model(df)
+    try:
+        save_model(_model, model_path)
+    except Exception:
+        pass  # read-only filesystem is fine
     return _model
 
 

@@ -1,44 +1,73 @@
 # Heart Attack Prediction System
 
-This project provides a simple heart attack prediction system using medical and health information. It includes data preparation, model training, and a command-line prediction interface.
+A machine learning web app that estimates heart attack risk from common clinical features.  
+Includes a Random Forest model, a FastAPI backend, and a clean browser UI — ready to deploy on Vercel.
 
-## What it does
-- trains a machine learning model on heart attack risk features
-- saves the trained model to `model/heart_attack_model.pkl`
-- predicts patient heart attack risk from medical info
+## Live features
+- Interactive web form at the root URL
+- REST API: `POST /api/predict`
+- Health check: `GET /api/health`
+- Original CLI scripts (`train.py`, `predict.py`) still work locally
 
-## Setup
-1. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
+## Quick start (local)
 
-2. Train the model:
-   ```bash
-   python train.py
-   ```
+```bash
+pip install -r requirements.txt
+python train.py          # optional – API can train on first request
+python -m uvicorn api.index:app --reload
+```
 
-3. Predict using the saved model:
-   ```bash
-   python predict.py --age 55 --sex 1 --cp 2 --trestbps 130 --chol 250 --fbs 0 --restecg 1 --thalach 150 --exang 0 --oldpeak 1.5 --slope 2 --ca 0 --thal 2
-   ```
+Then open http://localhost:8000 (or serve `public/index.html`).
 
-## Data
-- `data/heart_attack_data.csv` contains sample patient records.
-- If no dataset exists, `train.py` will generate a synthetic dataset automatically.
+### CLI prediction example
+```bash
+python predict.py --age 55 --sex 1 --cp 2 --trestbps 130 --chol 250 --fbs 0 --restecg 1 --thalach 150 --exang 0 --oldpeak 1.5 --slope 2 --ca 0 --thal 2
+```
 
-## Features
-- `age`: patient age in years
-- `sex`: 1 = male, 0 = female
-- `cp`: chest pain type (0-3)
-- `trestbps`: resting blood pressure
-- `chol`: serum cholesterol in mg/dl
-- `fbs`: fasting blood sugar > 120 mg/dl (1 = true, 0 = false)
-- `restecg`: resting electrocardiographic results (0-2)
-- `thalach`: maximum heart rate achieved
-- `exang`: exercise-induced angina (1 = yes, 0 = no)
-- `oldpeak`: ST depression induced by exercise relative to rest
-- `slope`: slope of peak exercise ST segment (0-2)
-- `ca`: number of major vessels colored by fluoroscopy (0-4)
-- `thal`: thalassemia (1 = normal, 2 = fixed defect, 3 = reversible defect)
-- `heart_attack`: target label (0 = no, 1 = yes)
+## Deploy to Vercel
+
+1. This repository is already linked to the Vercel project.
+2. Push to `main` triggers a new deployment.
+3. Framework preset: **Other** (or leave default).
+4. No extra environment variables needed.
+
+After deployment the form is available at your Vercel URL and calls `/api/predict` on the same domain.
+
+## API
+
+**POST /api/predict**
+
+```json
+{
+  "age": 55,
+  "sex": 1,
+  "cp": 2,
+  "trestbps": 130,
+  "chol": 250,
+  "fbs": 0,
+  "restecg": 1,
+  "thalach": 150,
+  "exang": 0,
+  "oldpeak": 1.5,
+  "slope": 2,
+  "ca": 0,
+  "thal": 2
+}
+```
+
+Response:
+
+```json
+{
+  "prediction": 1,
+  "label": "Heart attack likely",
+  "probability": 0.82,
+  "risk_percent": 82.0
+}
+```
+
+## Features used by the model
+- age, sex, cp, trestbps, chol, fbs, restecg, thalach, exang, oldpeak, slope, ca, thal
+
+## Disclaimer
+This project is for educational purposes only. It does **not** provide medical advice or diagnosis.
